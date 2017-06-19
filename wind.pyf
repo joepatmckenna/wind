@@ -1,0 +1,1806 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module polar__user__routines 
+    interface polar_user_interface 
+        function rad(v_i_) result (r) ! in :wind:fitpack/polar.f:polar:unknown_interface
+            real :: v_i_
+            real*8 :: r
+        end function rad
+    end interface polar_user_interface
+end python module polar__user__routines
+python module wind ! in
+    interface  ! in :wind
+         subroutine sphere_forward_euler(t0,t1,tn,dt,lat,lon, &
+              utx1,unx1,uty1,uny1,uc1, &
+              utx2,unx2,uty2,uny2,uc2, &
+              vtx1,vnx1,vty1,vny1,vc1, &
+              vtx2,vnx2,vty2,vny2,vc2,kx,ky)
+
+           ! lat,lon = sphere_forward_euler(t0,t1,tn,dt,lat,lon &
+           !      utx1,uty1,uc1,utx2,uty2,uc2, &
+           !      vtx1,vty1,vc1,vtx2,vty2,vc2,traj)
+
+           integer, intent(hide) :: kx=3,ky=3
+           integer :: t0,t1,tn,dt
+           real*8 intent(in,out) :: lat,lon
+           real*8 dimension(unx1),intent(in) :: utx1
+           integer intent(hide),depend(utx1) :: unx1=len(utx1)
+           real*8 dimension(uny1),intent(in) :: uty1
+           integer intent(hide),depend(uty1) :: uny1=len(uty1)
+           real*8 intent(in),dimension((unx1-kx-1)*(uny1-ky-1)),&
+                depend(unx1,uny1,kx,ky),check(len(uc1)==(unx1-kx-1)*(uny1-ky-1)):: uc1
+           real*8 dimension(unx2),intent(in) :: utx2
+           integer intent(hide),depend(utx2) :: unx2=len(utx2)
+           real*8 dimension(uny2),intent(in) :: uty2
+           integer intent(hide),depend(uty2) :: uny2=len(uty2)
+           real*8 intent(in),dimension((unx2-kx-1)*(uny2-ky-1)),&
+                depend(unx2,uny2,kx,ky),check(len(uc2)==(unx2-kx-1)*(uny2-ky-1)):: uc2
+           real*8 dimension(vnx1),intent(in) :: vtx1
+           integer intent(hide),depend(vtx1) :: vnx1=len(vtx1)
+           real*8 dimension(vny1),intent(in) :: vty1
+           integer intent(hide),depend(vty1) :: vny1=len(vty1)
+           real*8 intent(in),dimension((vnx1-kx-1)*(vny1-ky-1)),&
+                depend(vnx1,vny1,kx,ky),check(len(vc1)==(vnx1-kx-1)*(vny1-ky-1)):: vc1
+           real*8 dimension(vnx2),intent(in) :: vtx2
+           integer intent(hide),depend(vtx2) :: vnx2=len(vtx2)
+           real*8 dimension(vny2),intent(in) :: vty2
+           integer intent(hide),depend(vty2) :: vny2=len(vty2)
+           real*8 intent(in),dimension((vnx2-kx-1)*(vny2-ky-1)),&
+                depend(vnx2,vny2,kx,ky),check(len(vc2)==(vnx2-kx-1)*(vny2-ky-1)):: vc2
+           ! real*8 intent(out),dimension(1+(tn-t1)/dt,2) :: traj
+       end subroutine sphere_forward_euler
+
+        ! rep: not auto-generated
+        subroutine rep(iopt,ider,mx,x,my,y,z,z0,z1,s,nxest,nyest, &
+             nx,tx,ny,ty,c,fp,wrk,lwrk,iwrk,kwrk,ier)
+          !  nx,tx,ny,ty,c,fp,ier = rep(x,y,z,[z0,z1,s])
+
+          fortranname spgrid
+          threadsafe
+
+          integer dimension(3) :: iopt
+          integer dimension(4) :: ider
+          integer intent(hide) :: mx=len(x)
+          real*8 dimension(mx) :: x
+          integer intent(hide) :: my=len(y)
+          real*8 dimension(my) :: y
+          real*8 dimension(mx*my),depend(mx,my),check(len(z)==mx*my) :: z
+          real*8 optional :: z0
+          real*8 optional :: z1
+          real*8 optional,check(0.0<=s) :: s = 0.0
+          integer intent(hide),depend(mx),check(nxest>=8) &
+               :: nxest = mx+6
+          integer intent(hide),depend(my),check(nyest>=8) &
+               :: nyest = my+7
+          integer intent(out) :: nx
+          real*8 dimension(nxest),intent(out),depend(nxest) :: tx
+          integer intent(out) :: ny
+          real*8 dimension(nyest),intent(out),depend(nyest) :: ty
+          real*8 dimension((nxest-4)*(nyest-4)), &
+               depend(nxest,nyest),intent(out) :: c
+          real*8 intent(out) :: fp
+          real*8 dimension(lwrk),intent(cache,hide),depend(lwrk) :: wrk
+          integer intent(hide),depend(mx,my,nxest,nyest) &
+               :: lwrk=12+nxest*(my+nyest+3)+nyest*24+4*mx+8*my+max(my+nyest,nxest)
+          integer dimension(kwrk),intent(cache,hide),depend(kwrk) :: iwrk
+          integer intent(hide),depend(mx,my,nxest,nyest) &
+               :: kwrk=5+mx+my+nxest+nyest
+          integer intent(out) :: ier
+        end subroutine rep
+
+        ! ev: not auto-generated
+        subroutine ev(tx,nx,ty,ny,c,kx,ky,x,mx,y,my,z,wrk,lwrk,iwrk,kwrk,ier)
+          ! z,ier = ev(tx,ty,c,x,y)
+
+          fortranname bispev
+          threadsafe
+
+          integer, intent(hide) :: kx=3,ky=3
+          real*8 dimension(nx),intent(in) :: tx
+          integer intent(hide),depend(tx) :: nx=len(tx)
+          real*8 dimension(ny),intent(in) :: ty
+          integer intent(hide),depend(ty) :: ny=len(ty)
+          real*8 intent(in),dimension((nx-kx-1)*(ny-ky-1)),depend(nx,ny,kx,ky),&
+               check(len(c)==(nx-kx-1)*(ny-ky-1)):: c
+          integer :: kx
+          integer :: ky
+          real*8 intent(in),dimension(mx) :: x
+          integer intent(hide),depend(x) :: mx=len(x)
+          real*8 intent(in),dimension(my) :: y
+          integer intent(hide),depend(y) :: my=len(y)
+          real*8 dimension(mx,my),depend(mx,my),intent(out,c) :: z
+          real*8 dimension(lwrk),depend(lwrk),intent(hide,cache) :: wrk
+          integer intent(hide),depend(mx,kx,my,ky) :: lwrk=mx*(kx+1)+my*(ky+1)
+          integer dimension(kwrk),depend(kwrk),intent(hide,cache) :: iwrk
+          integer intent(hide),depend(mx,my) :: kwrk=mx+my
+          integer intent(out) :: ier
+        end subroutine ev
+
+        subroutine bispeu(tx,nx,ty,ny,c,kx,ky,x,y,z,m,wrk,lwrk,ier) ! in :wind:fitpack/bispeu.f
+            real*8 dimension(nx) :: tx
+            integer, optional,check(len(tx)>=nx),depend(tx) :: nx=len(tx)
+            real*8 dimension(ny) :: ty
+            integer, optional,check(len(ty)>=ny),depend(ty) :: ny=len(ty)
+            real*8 dimension((nx-kx-1)*(ny-ky-1)),depend(nx,ny,kx,ky) :: c
+            integer :: kx
+            integer :: ky
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: z
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer :: ier
+        end subroutine bispeu
+        subroutine bispev(tx,nx,ty,ny,c,kx,ky,x,mx,y,my,z,wrk,lwrk,iwrk,kwrk,ier)
+            real*8 dimension(nx) :: tx
+            integer, optional,check(len(tx)>=nx),depend(tx) :: nx=len(tx)
+            real*8 dimension(ny) :: ty
+            integer, optional,check(len(ty)>=ny),depend(ty) :: ny=len(ty)
+            real*8 dimension((nx-kx-1)*(ny-ky-1)),depend(nx,ny,kx,ky) :: c
+            integer :: kx
+            integer :: ky
+            real*8 dimension(mx) :: x
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(my) :: y
+            integer, optional,check(len(y)>=my),depend(y) :: my=len(y)
+            real*8 dimension(mx*my),depend(mx,my) :: z
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine bispev
+        subroutine clocur(iopt,ipar,idim,m,u,mx,x,w,k,s,nest,n,t,nc,c,fp,wrk,lwrk,iwrk,ier) ! in :wind:fitpack/clocur.f
+            integer :: iopt
+            integer :: ipar
+            integer :: idim
+            integer, optional,check(len(u)>=m),depend(u) :: m=len(u)
+            real*8 dimension(m) :: u
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(mx) :: x
+            real*8 dimension(m),depend(m) :: w
+            integer :: k
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            integer :: n
+            real*8 dimension(nest) :: t
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(nest),depend(nest) :: iwrk
+            integer :: ier
+        end subroutine clocur
+        subroutine cocosp(m,x,y,w,n,t,e,maxtr,maxbin,c,sq,sx,bind,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/cocosp.f
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: w
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(n) :: t
+            real*8 dimension(n),depend(n) :: e
+            integer :: maxtr
+            integer :: maxbin
+            real*8 dimension(n),depend(n) :: c
+            real*8 :: sq
+            real*8 dimension(m),depend(m) :: sx
+            logical dimension(n),depend(n) :: bind
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine cocosp
+        subroutine concon(iopt,m,x,y,w,v,s,nest,maxtr,maxbin,n,t,c,sq,sx,bind,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/concon.f
+            integer :: iopt
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: w
+            real*8 dimension(m),depend(m) :: v
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            integer :: maxtr
+            integer :: maxbin
+            integer :: n
+            real*8 dimension(nest) :: t
+            real*8 dimension(nest),depend(nest) :: c
+            real*8 :: sq
+            real*8 dimension(m),depend(m) :: sx
+            logical dimension(nest),depend(nest) :: bind
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine concon
+        subroutine concur(iopt,idim,m,u,mx,x,xx,w,ib,db,nb,ie,de,ne,k,s,nest,n,t,nc,c,np,cp,fp,wrk,lwrk,iwrk,ier) ! in :wind:fitpack/concur.f
+            integer :: iopt
+            integer :: idim
+            integer, optional,check(len(u)>=m),depend(u) :: m=len(u)
+            real*8 dimension(m) :: u
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(mx) :: x
+            real*8 dimension(mx),depend(mx) :: xx
+            real*8 dimension(m),depend(m) :: w
+            integer :: ib
+            real*8 dimension(nb) :: db
+            integer, optional,check(len(db)>=nb),depend(db) :: nb=len(db)
+            integer :: ie
+            real*8 dimension(ne) :: de
+            integer, optional,check(len(de)>=ne),depend(de) :: ne=len(de)
+            integer :: k
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            integer :: n
+            real*8 dimension(nest) :: t
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 dimension(nc) :: c
+            integer, optional,check(len(cp)>=np),depend(cp) :: np=len(cp)
+            real*8 dimension(np) :: cp
+            real*8 :: fp
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(nest),depend(nest) :: iwrk
+            integer :: ier
+        end subroutine concur
+        subroutine cualde(idim,t,n,c,nc,k1,u,d,nd,ier) ! in :wind:fitpack/cualde.f
+            integer :: idim
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(nc) :: c
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            integer :: k1
+            real*8 :: u
+            real*8 dimension(nd) :: d
+            integer, optional,check(len(d)>=nd),depend(d) :: nd=len(d)
+            integer :: ier
+        end subroutine cualde
+        subroutine curev(idim,t,n,c,nc,k,u,m,x,mx,ier) ! in :wind:fitpack/curev.f
+            integer :: idim
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(nc) :: c
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            integer :: k
+            real*8 dimension(m) :: u
+            integer, optional,check(len(u)>=m),depend(u) :: m=len(u)
+            real*8 dimension(mx) :: x
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            integer :: ier
+        end subroutine curev
+        subroutine curfit(iopt,m,x,y,w,xb,xe,k,s,nest,n,t,c,fp,wrk,lwrk,iwrk,ier) ! in :wind:fitpack/curfit.f
+            integer :: iopt
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: w
+            real*8 :: xb
+            real*8 :: xe
+            integer :: k
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            integer :: n
+            real*8 dimension(nest) :: t
+            real*8 dimension(nest),depend(nest) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(nest),depend(nest) :: iwrk
+            integer :: ier
+        end subroutine curfit
+        function dblint(tx,nx,ty,ny,c,kx,ky,xb,xe,yb,ye,wrk) ! in :wind:fitpack/dblint.f
+            real*8 dimension(nx) :: tx
+            integer, optional,check(len(tx)>=nx),depend(tx) :: nx=len(tx)
+            real*8 dimension(ny) :: ty
+            integer, optional,check(len(ty)>=ny),depend(ty) :: ny=len(ty)
+            real*8 dimension((nx-kx-1)*(ny-ky-1)),depend(nx,ny,kx,ky) :: c
+            integer :: kx
+            integer :: ky
+            real*8 :: xb
+            real*8 :: xe
+            real*8 :: yb
+            real*8 :: ye
+            real*8 dimension(nx+ny-kx-ky-2),depend(nx,ny,kx,ky) :: wrk
+            real*8 :: dblint
+        end function dblint
+        function evapol(tu,nu,tv,nv,c,rad,x,y) ! in :wind:fitpack/evapol.f
+            real*8 dimension(nu) :: tu
+            integer, optional,check(len(tu)>=nu),depend(tu) :: nu=len(tu)
+            real*8 dimension(nv) :: tv
+            integer, optional,check(len(tv)>=nv),depend(tv) :: nv=len(tv)
+            real*8 dimension((nu-4)*(nv-4)),depend(nu,nv) :: c
+            real*8 :: rad
+            real*8 :: x
+            real*8 :: y
+            real*8 :: evapol
+        end function evapol
+        subroutine fourco(t,n,c,alfa,m,ress,resc,wrk1,wrk2,ier) ! in :wind:fitpack/fourco.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(n),depend(n) :: c
+            real*8 dimension(m) :: alfa
+            integer, optional,check(len(alfa)>=m),depend(alfa) :: m=len(alfa)
+            real*8 dimension(m),depend(m) :: ress
+            real*8 dimension(m),depend(m) :: resc
+            real*8 dimension(n),depend(n) :: wrk1
+            real*8 dimension(n),depend(n) :: wrk2
+            integer :: ier
+        end subroutine fourco
+        subroutine fpader(t,n,c,k1,x,l,d) ! in :wind:fitpack/fpader.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(n),depend(n) :: c
+            integer, optional,check(len(d)>=k1),depend(d) :: k1=len(d)
+            real*8 :: x
+            integer :: l
+            real*8 dimension(k1) :: d
+        end subroutine fpader
+        subroutine fpadno(maxtr,up,left,right,info,count,merk,jbind,n1,ier) ! in :wind:fitpack/fpadno.f
+            integer, optional,check(len(up)>=maxtr),depend(up) :: maxtr=len(up)
+            integer dimension(maxtr) :: up
+            integer dimension(maxtr),depend(maxtr) :: left
+            integer dimension(maxtr),depend(maxtr) :: right
+            integer dimension(maxtr),depend(maxtr) :: info
+            integer :: count
+            integer :: merk
+            integer dimension(n1) :: jbind
+            integer, optional,check(len(jbind)>=n1),depend(jbind) :: n1=len(jbind)
+            integer :: ier
+        end subroutine fpadno
+        subroutine fpadpo(idim,t,n,c,nc,k,cp,np,cc,t1,t2) ! in :wind:fitpack/fpadpo.f
+            integer :: idim
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(nc) :: c
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            integer :: k
+            real*8 dimension(np) :: cp
+            integer, optional,check(len(cp)>=np),depend(cp) :: np=len(cp)
+            real*8 dimension(nc),depend(nc) :: cc
+            real*8 dimension(n),depend(n) :: t1
+            real*8 dimension(n),depend(n) :: t2
+        end subroutine fpadpo
+        subroutine fpback(a,z,n,k,c,nest) ! in :wind:fitpack/fpback.f
+            real*8 dimension(nest,k) :: a
+            real*8 dimension(n) :: z
+            integer, optional,check(len(z)>=n),depend(z) :: n=len(z)
+            integer, optional,check(shape(a,1)==k),depend(a) :: k=shape(a,1)
+            real*8 dimension(n),depend(n) :: c
+            integer, optional,check(shape(a,0)==nest),depend(a) :: nest=shape(a,0)
+        end subroutine fpback
+        subroutine fpbacp(a,b,z,n,k,c,k1,nest) ! in :wind:fitpack/fpbacp.f
+            real*8 dimension(nest,k1) :: a
+            real*8 dimension(nest,k),depend(nest) :: b
+            real*8 dimension(n) :: z
+            integer, optional,check(len(z)>=n),depend(z) :: n=len(z)
+            integer, optional,check(shape(b,1)==k),depend(b) :: k=shape(b,1)
+            real*8 dimension(n),depend(n) :: c
+            integer, optional,check(shape(a,1)==k1),depend(a) :: k1=shape(a,1)
+            integer, optional,check(shape(a,0)==nest),depend(a) :: nest=shape(a,0)
+        end subroutine fpbacp
+        subroutine fpbfou(t,n,par,ress,resc) ! in :wind:fitpack/fpbfout.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 :: par
+            real*8 dimension(n),depend(n) :: ress
+            real*8 dimension(n),depend(n) :: resc
+        end subroutine fpbfou
+        subroutine fpbisp(tx,nx,ty,ny,c,kx,ky,x,mx,y,my,z,wx,wy,lx,ly) ! in :wind:fitpack/fpbisp.f
+            real*8 dimension(nx) :: tx
+            integer, optional,check(len(tx)>=nx),depend(tx) :: nx=len(tx)
+            real*8 dimension(ny) :: ty
+            integer, optional,check(len(ty)>=ny),depend(ty) :: ny=len(ty)
+            real*8 dimension((nx-kx-1)*(ny-ky-1)),depend(nx,ny,kx,ky) :: c
+            integer, optional,check((shape(wx,1)-1)==kx),depend(wx) :: kx=(shape(wx,1)-1)
+            integer, optional,check((shape(wy,1)-1)==ky),depend(wy) :: ky=(shape(wy,1)-1)
+            real*8 dimension(mx) :: x
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(my) :: y
+            integer, optional,check(len(y)>=my),depend(y) :: my=len(y)
+            real*8 dimension(mx*my),depend(mx,my) :: z
+            real*8 dimension(mx,kx + 1),depend(mx) :: wx
+            real*8 dimension(my,ky + 1),depend(my) :: wy
+            integer dimension(mx),depend(mx) :: lx
+            integer dimension(my),depend(my) :: ly
+        end subroutine fpbisp
+        subroutine fpbspl(t,n,k,x,l,h) ! in :wind:fitpack/fpbspl.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            integer :: k
+            real*8 :: x
+            integer :: l
+            real*8 dimension(20) :: h
+        end subroutine fpbspl
+        subroutine fpchec(x,m,t,n,k,ier) ! in :wind:fitpack/fpchec.f
+            real*8 dimension(m) :: x
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            integer :: k
+            integer :: ier
+        end subroutine fpchec
+        subroutine fpched(x,m,t,n,k,ib,ie,ier) ! in :wind:fitpack/fpched.f
+            real*8 dimension(m) :: x
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            integer :: k
+            integer :: ib
+            integer :: ie
+            integer :: ier
+        end subroutine fpched
+        subroutine fpchep(x,m,t,n,k,ier) ! in :wind:fitpack/fpchep.f
+            real*8 dimension(m) :: x
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            integer :: k
+            integer :: ier
+        end subroutine fpchep
+        subroutine fpclos(iopt,idim,m,u,mx,x,w,k,s,nest,tol,maxit,k1,k2,n,t,nc,c,fp,fpint,z,a1,a2,b,g1,g2,q,nrdata,ier) ! in :wind:fitpack/fpclos.f
+            integer :: iopt
+            integer :: idim
+            integer, optional,check(len(u)>=m),depend(u) :: m=len(u)
+            real*8 dimension(m) :: u
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(mx) :: x
+            real*8 dimension(m),depend(m) :: w
+            integer, optional,check(shape(a2,1)==k),depend(a2) :: k=shape(a2,1)
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(shape(a1,1)==k1),depend(a1) :: k1=shape(a1,1)
+            integer, optional,check(shape(b,1)==k2),depend(b) :: k2=shape(b,1)
+            integer :: n
+            real*8 dimension(nest) :: t
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 dimension(nest),depend(nest) :: fpint
+            real*8 dimension(nc),depend(nc) :: z
+            real*8 dimension(nest,k1),depend(nest) :: a1
+            real*8 dimension(nest,k),depend(nest) :: a2
+            real*8 dimension(nest,k2),depend(nest) :: b
+            real*8 dimension(nest,k2),depend(nest,k2) :: g1
+            real*8 dimension(nest,k1),depend(nest,k1) :: g2
+            real*8 dimension(m,k1),depend(m,k1) :: q
+            integer dimension(nest),depend(nest) :: nrdata
+            integer :: ier
+        end subroutine fpclos
+        subroutine fpcoco(iopt,m,x,y,w,v,s,nest,maxtr,maxbin,n,t,c,sq,sx,bind,e,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/fpcoco.f
+            integer :: iopt
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: w
+            real*8 dimension(m),depend(m) :: v
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            integer :: maxtr
+            integer :: maxbin
+            integer :: n
+            real*8 dimension(nest) :: t
+            real*8 dimension(nest),depend(nest) :: c
+            real*8 :: sq
+            real*8 dimension(m),depend(m) :: sx
+            logical dimension(nest),depend(nest) :: bind
+            real*8 dimension(nest),depend(nest) :: e
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine fpcoco
+        subroutine fpcons(iopt,idim,m,u,mx,x,w,ib,ie,k,s,nest,tol,maxit,k1,k2,n,t,nc,c,fp,fpint,z,a,b,g,q,nrdata,ier) ! in :wind:fitpack/fpcons.f
+            integer :: iopt
+            integer :: idim
+            integer, optional,check(len(u)>=m),depend(u) :: m=len(u)
+            real*8 dimension(m) :: u
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(mx) :: x
+            real*8 dimension(m),depend(m) :: w
+            integer :: ib
+            integer :: ie
+            integer :: k
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(shape(a,1)==k1),depend(a) :: k1=shape(a,1)
+            integer, optional,check(shape(b,1)==k2),depend(b) :: k2=shape(b,1)
+            integer :: n
+            real*8 dimension(nest) :: t
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 dimension(nest),depend(nest) :: fpint
+            real*8 dimension(nc),depend(nc) :: z
+            real*8 dimension(nest,k1),depend(nest) :: a
+            real*8 dimension(nest,k2),depend(nest) :: b
+            real*8 dimension(nest,k2),depend(nest,k2) :: g
+            real*8 dimension(m,k1),depend(m,k1) :: q
+            integer dimension(nest),depend(nest) :: nrdata
+            integer :: ier
+        end subroutine fpcons
+        subroutine fpcosp(m,x,y,w,n,t,e,maxtr,maxbin,c,sq,sx,bind,nm,mb,a,b,const_bn,z,zz,u,q,info,up,left,right,jbind,ibind,ier) ! in :wind:fitpack/fpcosp.f
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: w
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(n) :: t
+            real*8 dimension(n),depend(n) :: e
+            integer, optional,check(len(info)>=maxtr),depend(info) :: maxtr=len(info)
+            integer, optional,check(shape(b,1)==maxbin),depend(b) :: maxbin=shape(b,1)
+            real*8 dimension(n),depend(n) :: c
+            real*8 :: sq
+            real*8 dimension(m),depend(m) :: sx
+            logical dimension(n),depend(n) :: bind
+            integer, optional,check(shape(b,0)==nm),depend(b) :: nm=shape(b,0)
+            integer, optional,check(len(jbind)>=mb),depend(jbind) :: mb=len(jbind)
+            real*8 dimension(n,4),depend(n) :: a
+            real*8 dimension(nm,maxbin) :: b
+            real*8 dimension(n),depend(n) :: const_bn
+            real*8 dimension(n),depend(n) :: z
+            real*8 dimension(n),depend(n) :: zz
+            real*8 dimension(maxbin),depend(maxbin) :: u
+            real*8 dimension(m,4),depend(m) :: q
+            integer dimension(maxtr) :: info
+            integer dimension(maxtr),depend(maxtr) :: up
+            integer dimension(maxtr),depend(maxtr) :: left
+            integer dimension(maxtr),depend(maxtr) :: right
+            integer dimension(mb) :: jbind
+            integer dimension(mb),depend(mb) :: ibind
+            integer :: ier
+        end subroutine fpcosp
+        subroutine fpcsin(a,b,par,sia,coa,sib,cob,ress,resc) ! in :wind:fitpack/fpcsin.f
+            real*8 :: a
+            real*8 :: b
+            real*8 :: par
+            real*8 :: sia
+            real*8 :: coa
+            real*8 :: sib
+            real*8 :: cob
+            real*8 :: ress
+            real*8 :: resc
+        end subroutine fpcsin
+        subroutine fpcurf(iopt,x,y,w,m,xb,xe,k,s,nest,tol,maxit,k1,k2,n,t,c,fp,fpint,z,a,b,g,q,nrdata,ier) ! in :wind:fitpack/fpcurf.f
+            integer :: iopt
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: w
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 :: xb
+            real*8 :: xe
+            integer :: k
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(shape(a,1)==k1),depend(a) :: k1=shape(a,1)
+            integer, optional,check(shape(b,1)==k2),depend(b) :: k2=shape(b,1)
+            integer :: n
+            real*8 dimension(nest) :: t
+            real*8 dimension(nest),depend(nest) :: c
+            real*8 :: fp
+            real*8 dimension(nest),depend(nest) :: fpint
+            real*8 dimension(nest),depend(nest) :: z
+            real*8 dimension(nest,k1),depend(nest) :: a
+            real*8 dimension(nest,k2),depend(nest) :: b
+            real*8 dimension(nest,k2),depend(nest,k2) :: g
+            real*8 dimension(m,k1),depend(m,k1) :: q
+            integer dimension(nest),depend(nest) :: nrdata
+            integer :: ier
+        end subroutine fpcurf
+        subroutine fpcuro(a,b,c,d,x,n) ! in :wind:fitpack/fpcuro.f
+            real*8 :: a
+            real*8 :: b
+            real*8 :: c
+            real*8 :: d
+            real*8 dimension(3) :: x
+            integer :: n
+        end subroutine fpcuro
+        subroutine fpcyt1(a,n,nn) ! in :wind:fitpack/fpcyt1.f
+            real*8 dimension(nn,6) :: a
+            integer :: n
+            integer, optional,check(shape(a,0)==nn),depend(a) :: nn=shape(a,0)
+        end subroutine fpcyt1
+        subroutine fpcyt2(a,n,b,c,nn) ! in :wind:fitpack/fpcyt2.f
+            real*8 dimension(nn,6) :: a
+            integer, optional,check(len(b)>=n),depend(b) :: n=len(b)
+            real*8 dimension(n) :: b
+            real*8 dimension(n),depend(n) :: c
+            integer, optional,check(shape(a,0)==nn),depend(a) :: nn=shape(a,0)
+        end subroutine fpcyt2
+        subroutine fpdeno(maxtr,up,left,right,nbind,merk) ! in :wind:fitpack/fpdeno.f
+            integer, optional,check(len(up)>=maxtr),depend(up) :: maxtr=len(up)
+            integer dimension(maxtr) :: up
+            integer dimension(maxtr),depend(maxtr) :: left
+            integer dimension(maxtr),depend(maxtr) :: right
+            integer :: nbind
+            integer :: merk
+        end subroutine fpdeno
+        subroutine fpdisc(t,n,k2,b,nest) ! in :wind:fitpack/fpdisc.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            integer, optional,check(shape(b,1)==k2),depend(b) :: k2=shape(b,1)
+            real*8 dimension(nest,k2) :: b
+            integer, optional,check(shape(b,0)==nest),depend(b) :: nest=shape(b,0)
+        end subroutine fpdisc
+        subroutine fpfrno(maxtr,up,left,right,info,point,merk,n1,count,ier) ! in :wind:fitpack/fpfrno.f
+            integer, optional,check(len(up)>=maxtr),depend(up) :: maxtr=len(up)
+            integer dimension(maxtr) :: up
+            integer dimension(maxtr),depend(maxtr) :: left
+            integer dimension(maxtr),depend(maxtr) :: right
+            integer dimension(maxtr),depend(maxtr) :: info
+            integer :: point
+            integer :: merk
+            integer :: n1
+            integer :: count
+            integer :: ier
+        end subroutine fpfrno
+        subroutine fpgivs(piv,ww,cos,sin) ! in :wind:fitpack/fpgivs.f
+            real*8 :: piv
+            real*8 :: ww
+            real*8 :: cos
+            real*8 :: sin
+        end subroutine fpgivs
+        subroutine fpgrdi(ifsu,ifsv,ifbu,ifbv,iback,u,mu,v,mv,z,mz,dz,iop0,iop1,tu,nu,tv,nv,p,c,nc,sq,fp,fpu,fpv,mm,mvnu,spu,spv,right,q,au,av1,av2,bu,bv,aa,bb,cc,cosi,nru,nrv) ! in :wind:fitpack/fpgrdi.f
+            integer :: ifsu
+            integer :: ifsv
+            integer :: ifbu
+            integer :: ifbv
+            integer :: iback
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mz) :: z
+            integer, optional,check(len(z)>=mz),depend(z) :: mz=len(z)
+            real*8 dimension(3) :: dz
+            integer :: iop0
+            integer :: iop1
+            real*8 dimension(nu) :: tu
+            integer, optional,check(len(tu)>=nu),depend(tu) :: nu=len(tu)
+            real*8 dimension(nv) :: tv
+            integer, optional,check(len(tv)>=nv),depend(tv) :: nv=len(tv)
+            real*8 :: p
+            real*8 dimension(nc) :: c
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 :: sq
+            real*8 :: fp
+            real*8 dimension(nu),depend(nu) :: fpu
+            real*8 dimension(nv),depend(nv) :: fpv
+            integer, optional,check(len(right)>=mm),depend(right) :: mm=len(right)
+            integer, optional,check(len(q)>=mvnu),depend(q) :: mvnu=len(q)
+            real*8 dimension(mu,4),depend(mu) :: spu
+            real*8 dimension(mv,4),depend(mv) :: spv
+            real*8 dimension(mm) :: right
+            real*8 dimension(mvnu) :: q
+            real*8 dimension(nu,5),depend(nu) :: au
+            real*8 dimension(nv,6),depend(nv) :: av1
+            real*8 dimension(nv,4),depend(nv) :: av2
+            real*8 dimension(nu,5),depend(nu) :: bu
+            real*8 dimension(nv,5),depend(nv) :: bv
+            real*8 dimension(2,mv),depend(mv) :: aa
+            real*8 dimension(2,nv),depend(nv) :: bb
+            real*8 dimension(nv),depend(nv) :: cc
+            real*8 dimension(2,nv),depend(nv) :: cosi
+            integer dimension(mu),depend(mu) :: nru
+            integer dimension(mv),depend(mv) :: nrv
+        end subroutine fpgrdi
+        subroutine fpgrpa(ifsu,ifsv,ifbu,ifbv,idim,ipar,u,mu,v,mv,z,mz,tu,nu,tv,nv,p,c,nc,fp,fpu,fpv,mm,mvnu,spu,spv,right,q,au,au1,av,av1,bu,bv,nru,nrv) ! in :wind:fitpack/fpgrpa.f
+            integer :: ifsu
+            integer :: ifsv
+            integer :: ifbu
+            integer :: ifbv
+            integer :: idim
+            integer dimension(2) :: ipar
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mz*idim),depend(idim,mz) :: z
+            integer :: mz
+            real*8 dimension(nu) :: tu
+            integer, optional,check(len(tu)>=nu),depend(tu) :: nu=len(tu)
+            real*8 dimension(nv) :: tv
+            integer, optional,check(len(tv)>=nv),depend(tv) :: nv=len(tv)
+            real*8 :: p
+            real*8 dimension(nc*idim),depend(idim,nc) :: c
+            integer :: nc
+            real*8 :: fp
+            real*8 dimension(nu),depend(nu) :: fpu
+            real*8 dimension(nv),depend(nv) :: fpv
+            integer :: mm
+            integer, optional,check(len(q)>=mvnu),depend(q) :: mvnu=len(q)
+            real*8 dimension(mu,4),depend(mu) :: spu
+            real*8 dimension(mv,4),depend(mv) :: spv
+            real*8 dimension(mm*idim),depend(idim,mm) :: right
+            real*8 dimension(mvnu) :: q
+            real*8 dimension(nu,5),depend(nu) :: au
+            real*8 dimension(nu,4),depend(nu) :: au1
+            real*8 dimension(nv,5),depend(nv) :: av
+            real*8 dimension(nv,4),depend(nv) :: av1
+            real*8 dimension(nu,5),depend(nu) :: bu
+            real*8 dimension(nv,5),depend(nv) :: bv
+            integer dimension(mu),depend(mu) :: nru
+            integer dimension(mv),depend(mv) :: nrv
+        end subroutine fpgrpa
+        subroutine fpgrre(ifsx,ifsy,ifbx,ifby,x,mx,y,my,z,mz,kx,ky,tx,nx,ty,ny,p,c,nc,fp,fpx,fpy,mm,mynx,kx1,kx2,ky1,ky2,spx,spy,right,q,ax,ay,bx,by,nrx,nry) ! in :wind:fitpack/fpgrre.f
+            integer :: ifsx
+            integer :: ifsy
+            integer :: ifbx
+            integer :: ifby
+            real*8 dimension(mx) :: x
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(my) :: y
+            integer, optional,check(len(y)>=my),depend(y) :: my=len(y)
+            real*8 dimension(mz) :: z
+            integer, optional,check(len(z)>=mz),depend(z) :: mz=len(z)
+            integer :: kx
+            integer :: ky
+            real*8 dimension(nx) :: tx
+            integer, optional,check(len(tx)>=nx),depend(tx) :: nx=len(tx)
+            real*8 dimension(ny) :: ty
+            integer, optional,check(len(ty)>=ny),depend(ty) :: ny=len(ty)
+            real*8 :: p
+            real*8 dimension(nc) :: c
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 :: fp
+            real*8 dimension(nx),depend(nx) :: fpx
+            real*8 dimension(ny),depend(ny) :: fpy
+            integer, optional,check(len(right)>=mm),depend(right) :: mm=len(right)
+            integer, optional,check(len(q)>=mynx),depend(q) :: mynx=len(q)
+            integer, optional,check(shape(spx,1)==kx1),depend(spx) :: kx1=shape(spx,1)
+            integer, optional,check(shape(ax,1)==kx2),depend(ax) :: kx2=shape(ax,1)
+            integer, optional,check(shape(spy,1)==ky1),depend(spy) :: ky1=shape(spy,1)
+            integer, optional,check(shape(ay,1)==ky2),depend(ay) :: ky2=shape(ay,1)
+            real*8 dimension(mx,kx1),depend(mx) :: spx
+            real*8 dimension(my,ky1),depend(my) :: spy
+            real*8 dimension(mm) :: right
+            real*8 dimension(mynx) :: q
+            real*8 dimension(nx,kx2),depend(nx) :: ax
+            real*8 dimension(ny,ky2),depend(ny) :: ay
+            real*8 dimension(nx,kx2),depend(nx,kx2) :: bx
+            real*8 dimension(ny,ky2),depend(ny,ky2) :: by
+            integer dimension(mx),depend(mx) :: nrx
+            integer dimension(my),depend(my) :: nry
+        end subroutine fpgrre
+        subroutine fpgrsp(ifsu,ifsv,ifbu,ifbv,iback,u,mu,v,mv,r,mr,dr,iop0,iop1,tu,nu,tv,nv,p,c,nc,sq,fp,fpu,fpv,mm,mvnu,spu,spv,right,q,au,av1,av2,bu,bv,a0,a1,b0,b1,c0,c1,cosi,nru,nrv) ! in :wind:fitpack/fpgrsp.f
+            integer :: ifsu
+            integer :: ifsv
+            integer :: ifbu
+            integer :: ifbv
+            integer :: iback
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mr) :: r
+            integer, optional,check(len(r)>=mr),depend(r) :: mr=len(r)
+            real*8 dimension(6) :: dr
+            integer :: iop0
+            integer :: iop1
+            real*8 dimension(nu) :: tu
+            integer, optional,check(len(tu)>=nu),depend(tu) :: nu=len(tu)
+            real*8 dimension(nv) :: tv
+            integer, optional,check(len(tv)>=nv),depend(tv) :: nv=len(tv)
+            real*8 :: p
+            real*8 dimension(nc) :: c
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 :: sq
+            real*8 :: fp
+            real*8 dimension(nu),depend(nu) :: fpu
+            real*8 dimension(nv),depend(nv) :: fpv
+            integer, optional,check(len(right)>=mm),depend(right) :: mm=len(right)
+            integer, optional,check(len(q)>=mvnu),depend(q) :: mvnu=len(q)
+            real*8 dimension(mu,4),depend(mu) :: spu
+            real*8 dimension(mv,4),depend(mv) :: spv
+            real*8 dimension(mm) :: right
+            real*8 dimension(mvnu) :: q
+            real*8 dimension(nu,5),depend(nu) :: au
+            real*8 dimension(nv,6),depend(nv) :: av1
+            real*8 dimension(nv,4),depend(nv) :: av2
+            real*8 dimension(nu,5),depend(nu) :: bu
+            real*8 dimension(nv,5),depend(nv) :: bv
+            real*8 dimension(2,mv),depend(mv) :: a0
+            real*8 dimension(2,mv),depend(mv) :: a1
+            real*8 dimension(2,nv),depend(nv) :: b0
+            real*8 dimension(2,nv),depend(nv) :: b1
+            real*8 dimension(nv),depend(nv) :: c0
+            real*8 dimension(nv),depend(nv) :: c1
+            real*8 dimension(2,nv),depend(nv) :: cosi
+            integer dimension(mu),depend(mu) :: nru
+            integer dimension(mv),depend(mv) :: nrv
+        end subroutine fpgrsp
+        subroutine fpinst(iopt,t,n,c,k,x,l,tt,nn,cc,nest) ! in :wind:fitpack/fpinst.f
+            integer :: iopt
+            real*8 dimension(nest) :: t
+            integer :: n
+            real*8 dimension(nest),depend(nest) :: c
+            integer :: k
+            real*8 :: x
+            integer :: l
+            real*8 dimension(nest),depend(nest) :: tt
+            integer :: nn
+            real*8 dimension(nest),depend(nest) :: cc
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+        end subroutine fpinst
+        subroutine fpintb(t,n,bint,nk1,x,y) ! in :wind:fitpack/fpintb.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(nk1) :: bint
+            integer, optional,check(len(bint)>=nk1),depend(bint) :: nk1=len(bint)
+            real*8 :: x
+            real*8 :: y
+        end subroutine fpintb
+        subroutine fpknot(x,m,t,n,fpint,nrdata,nrint,nest,istart) ! in :wind:fitpack/fpknot.f
+            real*8 dimension(m) :: x
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(nest) :: t
+            integer :: n
+            real*8 dimension(nest),depend(nest) :: fpint
+            integer dimension(nest),depend(nest) :: nrdata
+            integer :: nrint
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            integer :: istart
+        end subroutine fpknot
+        subroutine fpopdi(ifsu,ifsv,ifbu,ifbv,u,mu,v,mv,z,mz,z0,dz,iopt,ider,tu,nu,tv,nv,nuest,nvest,p,step,c,nc,fp,fpu,fpv,nru,nrv,wrk,lwrk) ! in :wind:fitpack/fpopdi.f
+            integer :: ifsu
+            integer :: ifsv
+            integer :: ifbu
+            integer :: ifbv
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mz) :: z
+            integer, optional,check(len(z)>=mz),depend(z) :: mz=len(z)
+            real*8 :: z0
+            real*8 dimension(3) :: dz
+            integer dimension(3) :: iopt
+            integer dimension(2) :: ider
+            real*8 dimension(nu) :: tu
+            integer, optional,check(len(tu)>=nu),depend(tu) :: nu=len(tu)
+            real*8 dimension(nv) :: tv
+            integer, optional,check(len(tv)>=nv),depend(tv) :: nv=len(tv)
+            integer :: nuest
+            integer :: nvest
+            real*8 :: p
+            real*8 :: step
+            real*8 dimension(nc) :: c
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 :: fp
+            real*8 dimension(nu),depend(nu) :: fpu
+            real*8 dimension(nv),depend(nv) :: fpv
+            integer dimension(mu),depend(mu) :: nru
+            integer dimension(mv),depend(mv) :: nrv
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+        end subroutine fpopdi
+        subroutine fpopsp(ifsu,ifsv,ifbu,ifbv,u,mu,v,mv,r,mr,r0,r1,dr,iopt,ider,tu,nu,tv,nv,nuest,nvest,p,step,c,nc,fp,fpu,fpv,nru,nrv,wrk,lwrk) ! in :wind:fitpack/fpopsp.f
+            integer :: ifsu
+            integer :: ifsv
+            integer :: ifbu
+            integer :: ifbv
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mr) :: r
+            integer, optional,check(len(r)>=mr),depend(r) :: mr=len(r)
+            real*8 :: r0
+            real*8 :: r1
+            real*8 dimension(6) :: dr
+            integer dimension(3) :: iopt
+            integer dimension(4) :: ider
+            real*8 dimension(nu) :: tu
+            integer, optional,check(len(tu)>=nu),depend(tu) :: nu=len(tu)
+            real*8 dimension(nv) :: tv
+            integer, optional,check(len(tv)>=nv),depend(tv) :: nv=len(tv)
+            integer :: nuest
+            integer :: nvest
+            real*8 :: p
+            real*8 dimension(2) :: step
+            real*8 dimension(nc) :: c
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 :: fp
+            real*8 dimension(nu),depend(nu) :: fpu
+            real*8 dimension(nv),depend(nv) :: fpv
+            integer dimension(mu),depend(mu) :: nru
+            integer dimension(mv),depend(mv) :: nrv
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+        end subroutine fpopsp
+        subroutine fporde(x,y,m,kx,ky,tx,nx,ty,ny,nummer,index_bn,nreg) ! in :wind:fitpack/fporde.f
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            integer :: kx
+            integer :: ky
+            real*8 dimension(nx) :: tx
+            integer, optional,check(len(tx)>=nx),depend(tx) :: nx=len(tx)
+            real*8 dimension(ny) :: ty
+            integer, optional,check(len(ty)>=ny),depend(ty) :: ny=len(ty)
+            integer dimension(m),depend(m) :: nummer
+            integer dimension(nreg) :: index_bn
+            integer, optional,check(len(index_bn)>=nreg),depend(index_bn) :: nreg=len(index_bn)
+        end subroutine fporde
+        subroutine fppara(iopt,idim,m,u,mx,x,w,ub,ue,k,s,nest,tol,maxit,k1,k2,n,t,nc,c,fp,fpint,z,a,b,g,q,nrdata,ier) ! in :wind:fitpack/fppara.f
+            integer :: iopt
+            integer :: idim
+            integer, optional,check(len(u)>=m),depend(u) :: m=len(u)
+            real*8 dimension(m) :: u
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(mx) :: x
+            real*8 dimension(m),depend(m) :: w
+            real*8 :: ub
+            real*8 :: ue
+            integer :: k
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(shape(a,1)==k1),depend(a) :: k1=shape(a,1)
+            integer, optional,check(shape(b,1)==k2),depend(b) :: k2=shape(b,1)
+            integer :: n
+            real*8 dimension(nest) :: t
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 dimension(nest),depend(nest) :: fpint
+            real*8 dimension(nc),depend(nc) :: z
+            real*8 dimension(nest,k1),depend(nest) :: a
+            real*8 dimension(nest,k2),depend(nest) :: b
+            real*8 dimension(nest,k2),depend(nest,k2) :: g
+            real*8 dimension(m,k1),depend(m,k1) :: q
+            integer dimension(nest),depend(nest) :: nrdata
+            integer :: ier
+        end subroutine fppara
+        subroutine fppasu(iopt,ipar,idim,u,mu,v,mv,z,mz,s,nuest,nvest,tol,maxit,nc,nu,tu,nv,tv,c,fp,fp0,fpold,reducu,reducv,fpintu,fpintv,lastdi,nplusu,nplusv,nru,nrv,nrdatu,nrdatv,wrk,lwrk,ier) ! in :wind:fitpack/fppasu.f
+            integer :: iopt
+            integer dimension(2) :: ipar
+            integer :: idim
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mz*idim),depend(idim,mz) :: z
+            integer :: mz
+            real*8 :: s
+            integer, optional,check(len(tu)>=nuest),depend(tu) :: nuest=len(tu)
+            integer, optional,check(len(tv)>=nvest),depend(tv) :: nvest=len(tv)
+            real*8 :: tol
+            integer :: maxit
+            integer :: nc
+            integer :: nu
+            real*8 dimension(nuest) :: tu
+            integer :: nv
+            real*8 dimension(nvest) :: tv
+            real*8 dimension(nc*idim),depend(idim,nc) :: c
+            real*8 :: fp
+            real*8 :: fp0
+            real*8 :: fpold
+            real*8 :: reducu
+            real*8 :: reducv
+            real*8 dimension(nuest),depend(nuest) :: fpintu
+            real*8 dimension(nvest),depend(nvest) :: fpintv
+            integer :: lastdi
+            integer :: nplusu
+            integer :: nplusv
+            integer dimension(mu),depend(mu) :: nru
+            integer dimension(mv),depend(mv) :: nrv
+            integer dimension(nuest),depend(nuest) :: nrdatu
+            integer dimension(nvest),depend(nvest) :: nrdatv
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer :: ier
+        end subroutine fppasu
+        subroutine fpperi(iopt,x,y,w,m,k,s,nest,tol,maxit,k1,k2,n,t,c,fp,fpint,z,a1,a2,b,g1,g2,q,nrdata,ier) ! in :wind:fitpack/fpperi.f
+            integer :: iopt
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: w
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            integer, optional,check(shape(a2,1)==k),depend(a2) :: k=shape(a2,1)
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(shape(a1,1)==k1),depend(a1) :: k1=shape(a1,1)
+            integer, optional,check(shape(b,1)==k2),depend(b) :: k2=shape(b,1)
+            integer :: n
+            real*8 dimension(nest) :: t
+            real*8 dimension(nest),depend(nest) :: c
+            real*8 :: fp
+            real*8 dimension(nest),depend(nest) :: fpint
+            real*8 dimension(nest),depend(nest) :: z
+            real*8 dimension(nest,k1),depend(nest) :: a1
+            real*8 dimension(nest,k),depend(nest) :: a2
+            real*8 dimension(nest,k2),depend(nest) :: b
+            real*8 dimension(nest,k2),depend(nest,k2) :: g1
+            real*8 dimension(nest,k1),depend(nest,k1) :: g2
+            real*8 dimension(m,k1),depend(m,k1) :: q
+            integer dimension(nest),depend(nest) :: nrdata
+            integer :: ier
+        end subroutine fpperi
+        subroutine fppocu(idim,k,a,b,ib,db,nb,ie,de,ne,cp,np) ! in :wind:fitpack/fppocu.f
+            integer :: idim
+            integer :: k
+            real*8 :: a
+            real*8 :: b
+            integer :: ib
+            real*8 dimension(nb) :: db
+            integer, optional,check(len(db)>=nb),depend(db) :: nb=len(db)
+            integer :: ie
+            real*8 dimension(ne) :: de
+            integer, optional,check(len(de)>=ne),depend(de) :: ne=len(de)
+            real*8 dimension(np) :: cp
+            integer, optional,check(len(cp)>=np),depend(cp) :: np=len(cp)
+        end subroutine fppocu
+        subroutine fppogr(iopt,ider,u,mu,v,mv,z,mz,z0,r,s,nuest,nvest,tol,maxit,nc,nu,tu,nv,tv,c,fp,fp0,fpold,reducu,reducv,fpintu,fpintv,dz,step,lastdi,nplusu,nplusv,lasttu,nru,nrv,nrdatu,nrdatv,wrk,lwrk,ier) ! in :wind:fitpack/fppogr.f
+            integer dimension(3) :: iopt
+            integer dimension(2) :: ider
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mz) :: z
+            integer, optional,check(len(z)>=mz),depend(z) :: mz=len(z)
+            real*8 :: z0
+            real*8 :: r
+            real*8 :: s
+            integer, optional,check(len(tu)>=nuest),depend(tu) :: nuest=len(tu)
+            integer, optional,check(len(tv)>=nvest),depend(tv) :: nvest=len(tv)
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            integer :: nu
+            real*8 dimension(nuest) :: tu
+            integer :: nv
+            real*8 dimension(nvest) :: tv
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 :: fp0
+            real*8 :: fpold
+            real*8 :: reducu
+            real*8 :: reducv
+            real*8 dimension(nuest),depend(nuest) :: fpintu
+            real*8 dimension(nvest),depend(nvest) :: fpintv
+            real*8 dimension(3) :: dz
+            real*8 :: step
+            integer :: lastdi
+            integer :: nplusu
+            integer :: nplusv
+            integer :: lasttu
+            integer dimension(mu),depend(mu) :: nru
+            integer dimension(mv),depend(mv) :: nrv
+            integer dimension(nuest),depend(nuest) :: nrdatu
+            integer dimension(nvest),depend(nvest) :: nrdatv
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer :: ier
+        end subroutine fppogr
+        subroutine fppola(iopt1,iopt2,iopt3,m,u,v,z,w,rad,s,nuest,nvest,eta,tol,maxit,ib1,ib3,nc,ncc,intest,nrest,nu,tu,nv,tv,c,fp,sup,fpint,coord,f,ff,row,cs,cosi,a,q,bu,bv,spu,spv,h,index_bn,nummer,wrk,lwrk,ier) ! in :wind:fitpack/fppola.f
+            integer :: iopt1
+            integer :: iopt2
+            integer :: iopt3
+            integer, optional,check(len(u)>=m),depend(u) :: m=len(u)
+            real*8 dimension(m) :: u
+            real*8 dimension(m),depend(m) :: v
+            real*8 dimension(m),depend(m) :: z
+            real*8 dimension(m),depend(m) :: w
+            real*8 :: rad
+            real*8 :: s
+            integer, optional,check(len(tu)>=nuest),depend(tu) :: nuest=len(tu)
+            integer, optional,check(len(tv)>=nvest),depend(tv) :: nvest=len(tv)
+            real*8 :: eta
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(shape(a,1)==ib1),depend(a) :: ib1=shape(a,1)
+            integer, optional,check(shape(q,1)==ib3),depend(q) :: ib3=shape(q,1)
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            integer, optional,check(len(f)>=ncc),depend(f) :: ncc=len(f)
+            integer, optional,check(len(fpint)>=intest),depend(fpint) :: intest=len(fpint)
+            integer, optional,check(len(index_bn)>=nrest),depend(index_bn) :: nrest=len(index_bn)
+            integer :: nu
+            real*8 dimension(nuest) :: tu
+            integer :: nv
+            real*8 dimension(nvest) :: tv
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 :: sup
+            real*8 dimension(intest) :: fpint
+            real*8 dimension(intest),depend(intest) :: coord
+            real*8 dimension(ncc) :: f
+            real*8 dimension(nc),depend(nc) :: ff
+            real*8 dimension(nvest),depend(nvest) :: row
+            real*8 dimension(nvest),depend(nvest) :: cs
+            real*8 dimension(5,nvest),depend(nvest) :: cosi
+            real*8 dimension(ncc,ib1),depend(ncc) :: a
+            real*8 dimension(ncc,ib3),depend(ncc) :: q
+            real*8 dimension(nuest,5),depend(nuest) :: bu
+            real*8 dimension(nvest,5),depend(nvest) :: bv
+            real*8 dimension(m,4),depend(m) :: spu
+            real*8 dimension(m,4),depend(m) :: spv
+            real*8 dimension(ib3),depend(ib3) :: h
+            integer dimension(nrest) :: index_bn
+            integer dimension(m),depend(m) :: nummer
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer :: ier
+        end subroutine fppola
+        subroutine fprank(a,f,n,m,na,tol,c,sq,rank_bn,aa,ff,h) ! in :wind:fitpack/fprank.f
+            real*8 dimension(na,m) :: a
+            real*8 dimension(n) :: f
+            integer, optional,check(len(f)>=n),depend(f) :: n=len(f)
+            integer, optional,check(shape(a,1)==m),depend(a) :: m=shape(a,1)
+            integer, optional,check(shape(a,0)==na),depend(a) :: na=shape(a,0)
+            real*8 :: tol
+            real*8 dimension(n),depend(n) :: c
+            real*8 :: sq
+            integer :: rank_bn
+            real*8 dimension(n,m),depend(n,m) :: aa
+            real*8 dimension(n),depend(n) :: ff
+            real*8 dimension(m),depend(m) :: h
+        end subroutine fprank
+        function fprati(p1,f1,p2,f2,p3,f3) ! in :wind:fitpack/fprati.f
+            real*8 :: p1
+            real*8 :: f1
+            real*8 :: p2
+            real*8 :: f2
+            real*8 :: p3
+            real*8 :: f3
+            real*8 :: fprati
+        end function fprati
+        subroutine fpregr(iopt,x,mx,y,my,z,mz,xb,xe,yb,ye,kx,ky,s,nxest,nyest,tol,maxit,nc,nx,tx,ny,ty,c,fp,fp0,fpold,reducx,reducy,fpintx,fpinty,lastdi,nplusx,nplusy,nrx,nry,nrdatx,nrdaty,wrk,lwrk,ier) ! in :wind:fitpack/fpregr.f
+            integer :: iopt
+            real*8 dimension(mx) :: x
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(my) :: y
+            integer, optional,check(len(y)>=my),depend(y) :: my=len(y)
+            real*8 dimension(mz) :: z
+            integer, optional,check(len(z)>=mz),depend(z) :: mz=len(z)
+            real*8 :: xb
+            real*8 :: xe
+            real*8 :: yb
+            real*8 :: ye
+            integer :: kx
+            integer :: ky
+            real*8 :: s
+            integer, optional,check(len(tx)>=nxest),depend(tx) :: nxest=len(tx)
+            integer, optional,check(len(ty)>=nyest),depend(ty) :: nyest=len(ty)
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            integer :: nx
+            real*8 dimension(nxest) :: tx
+            integer :: ny
+            real*8 dimension(nyest) :: ty
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 :: fp0
+            real*8 :: fpold
+            real*8 :: reducx
+            real*8 :: reducy
+            real*8 dimension(nxest),depend(nxest) :: fpintx
+            real*8 dimension(nyest),depend(nyest) :: fpinty
+            integer :: lastdi
+            integer :: nplusx
+            integer :: nplusy
+            integer dimension(mx),depend(mx) :: nrx
+            integer dimension(my),depend(my) :: nry
+            integer dimension(nxest),depend(nxest) :: nrdatx
+            integer dimension(nyest),depend(nyest) :: nrdaty
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer :: ier
+        end subroutine fpregr
+        subroutine fprota(cos,sin,a,b) ! in :wind:fitpack/fprota.f
+            real*8 :: cos
+            real*8 :: sin
+            real*8 :: a
+            real*8 :: b
+        end subroutine fprota
+        subroutine fprppo(nu,nv,if1,if2,cosi,ratio,c,f,ncoff) ! in :wind:fitpack/fprppo.f
+            integer :: nu
+            integer, optional,check(shape(cosi,1)==nv),depend(cosi) :: nv=shape(cosi,1)
+            integer :: if1
+            integer :: if2
+            real*8 dimension(5,nv) :: cosi
+            real*8 :: ratio
+            real*8 dimension(ncoff) :: c
+            real*8 dimension(ncoff),depend(ncoff) :: f
+            integer, optional,check(len(c)>=ncoff),depend(c) :: ncoff=len(c)
+        end subroutine fprppo
+        subroutine fprpsp(nt,np,co,si,c,f,ncoff) ! in :wind:fitpack/fprpsp.f
+            integer :: nt
+            integer, optional,check(len(co)>=np),depend(co) :: np=len(co)
+            real*8 dimension(np) :: co
+            real*8 dimension(np),depend(np) :: si
+            real*8 dimension(ncoff) :: c
+            real*8 dimension(ncoff),depend(ncoff) :: f
+            integer, optional,check(len(c)>=ncoff),depend(c) :: ncoff=len(c)
+        end subroutine fprpsp
+        subroutine fpseno(maxtr,up,left,right,info,merk,ibind,nbind) ! in :wind:fitpack/fpseno.f
+            integer, optional,check(len(up)>=maxtr),depend(up) :: maxtr=len(up)
+            integer dimension(maxtr) :: up
+            integer dimension(maxtr),depend(maxtr) :: left
+            integer dimension(maxtr),depend(maxtr) :: right
+            integer dimension(maxtr),depend(maxtr) :: info
+            integer :: merk
+            integer dimension(nbind) :: ibind
+            integer, optional,check(len(ibind)>=nbind),depend(ibind) :: nbind=len(ibind)
+        end subroutine fpseno
+        subroutine fpspgr(iopt,ider,u,mu,v,mv,r,mr,r0,r1,s,nuest,nvest,tol,maxit,nc,nu,tu,nv,tv,c,fp,fp0,fpold,reducu,reducv,fpintu,fpintv,dr,step,lastdi,nplusu,nplusv,lastu0,lastu1,nru,nrv,nrdatu,nrdatv,wrk,lwrk,ier) ! in :wind:fitpack/fpspgr.f
+            integer dimension(3) :: iopt
+            integer dimension(4) :: ider
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mr) :: r
+            integer, optional,check(len(r)>=mr),depend(r) :: mr=len(r)
+            real*8 :: r0
+            real*8 :: r1
+            real*8 :: s
+            integer, optional,check(len(tu)>=nuest),depend(tu) :: nuest=len(tu)
+            integer, optional,check(len(tv)>=nvest),depend(tv) :: nvest=len(tv)
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            integer :: nu
+            real*8 dimension(nuest) :: tu
+            integer :: nv
+            real*8 dimension(nvest) :: tv
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 :: fp0
+            real*8 :: fpold
+            real*8 :: reducu
+            real*8 :: reducv
+            real*8 dimension(nuest),depend(nuest) :: fpintu
+            real*8 dimension(nvest),depend(nvest) :: fpintv
+            real*8 dimension(6) :: dr
+            real*8 dimension(2) :: step
+            integer :: lastdi
+            integer :: nplusu
+            integer :: nplusv
+            integer :: lastu0
+            integer :: lastu1
+            integer dimension(mu),depend(mu) :: nru
+            integer dimension(mv),depend(mv) :: nrv
+            integer dimension(nuest),depend(nuest) :: nrdatu
+            integer dimension(nvest),depend(nvest) :: nrdatv
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer :: ier
+        end subroutine fpspgr
+        subroutine fpsphe(iopt,m,teta,phi,r,w,s,ntest,npest,eta,tol,maxit,ib1,ib3,nc,ncc,intest,nrest,nt,tt,np,tp,c,fp,sup,fpint,coord,f,ff,row,coco,cosi,a,q,bt,bp,spt,spp,h,index_bn,nummer,wrk,lwrk,ier) ! in :wind:fitpack/fpsphe.f
+            integer :: iopt
+            integer, optional,check(len(teta)>=m),depend(teta) :: m=len(teta)
+            real*8 dimension(m) :: teta
+            real*8 dimension(m),depend(m) :: phi
+            real*8 dimension(m),depend(m) :: r
+            real*8 dimension(m),depend(m) :: w
+            real*8 :: s
+            integer, optional,check(len(tt)>=ntest),depend(tt) :: ntest=len(tt)
+            integer, optional,check(len(tp)>=npest),depend(tp) :: npest=len(tp)
+            real*8 :: eta
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(shape(a,1)==ib1),depend(a) :: ib1=shape(a,1)
+            integer, optional,check(shape(q,1)==ib3),depend(q) :: ib3=shape(q,1)
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            integer, optional,check(len(f)>=ncc),depend(f) :: ncc=len(f)
+            integer, optional,check(len(fpint)>=intest),depend(fpint) :: intest=len(fpint)
+            integer, optional,check(len(index_bn)>=nrest),depend(index_bn) :: nrest=len(index_bn)
+            integer :: nt
+            real*8 dimension(ntest) :: tt
+            integer :: np
+            real*8 dimension(npest) :: tp
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 :: sup
+            real*8 dimension(intest) :: fpint
+            real*8 dimension(intest),depend(intest) :: coord
+            real*8 dimension(ncc) :: f
+            real*8 dimension(nc),depend(nc) :: ff
+            real*8 dimension(npest),depend(npest) :: row
+            real*8 dimension(npest),depend(npest) :: coco
+            real*8 dimension(npest),depend(npest) :: cosi
+            real*8 dimension(ncc,ib1),depend(ncc) :: a
+            real*8 dimension(ncc,ib3),depend(ncc) :: q
+            real*8 dimension(ntest,5),depend(ntest) :: bt
+            real*8 dimension(npest,5),depend(npest) :: bp
+            real*8 dimension(m,4),depend(m) :: spt
+            real*8 dimension(m,4),depend(m) :: spp
+            real*8 dimension(ib3),depend(ib3) :: h
+            integer dimension(nrest) :: index_bn
+            integer dimension(m),depend(m) :: nummer
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer :: ier
+        end subroutine fpsphe
+        subroutine fpsuev(idim,tu,nu,tv,nv,c,u,mu,v,mv,f,wu,wv,lu,lv) ! in :wind:fitpack/fpsuev.f
+            integer :: idim
+            real*8 dimension(nu) :: tu
+            integer, optional,check(len(tu)>=nu),depend(tu) :: nu=len(tu)
+            real*8 dimension(nv) :: tv
+            integer, optional,check(len(tv)>=nv),depend(tv) :: nv=len(tv)
+            real*8 dimension((nu-4)*(nv-4)*idim),depend(idim,nu,nv) :: c
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mu*mv*idim),depend(idim,mu,mv) :: f
+            real*8 dimension(mu,4),depend(mu) :: wu
+            real*8 dimension(mv,4),depend(mv) :: wv
+            integer dimension(mu),depend(mu) :: lu
+            integer dimension(mv),depend(mv) :: lv
+        end subroutine fpsuev
+        subroutine fpsurf(iopt,m,x,y,z,w,xb,xe,yb,ye,kxx,kyy,s,nxest,nyest,eta,tol,maxit,nmax,km1,km2,ib1,ib3,nc,intest,nrest,nx0,tx,ny0,ty,c,fp,fp0,fpint,coord,f,ff,a,q,bx,by,spx,spy,h,index_bn,nummer,wrk,lwrk,ier) ! in :wind:fitpack/fpsurf.f
+            integer :: iopt
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: z
+            real*8 dimension(m),depend(m) :: w
+            real*8 :: xb
+            real*8 :: xe
+            real*8 :: yb
+            real*8 :: ye
+            integer :: kxx
+            integer :: kyy
+            real*8 :: s
+            integer :: nxest
+            integer :: nyest
+            real*8 :: eta
+            real*8 :: tol
+            integer :: maxit
+            integer, optional,check(len(tx)>=nmax),depend(tx) :: nmax=len(tx)
+            integer, optional,check(shape(spx,1)==km1),depend(spx) :: km1=shape(spx,1)
+            integer, optional,check(shape(bx,1)==km2),depend(bx) :: km2=shape(bx,1)
+            integer, optional,check(shape(a,1)==ib1),depend(a) :: ib1=shape(a,1)
+            integer, optional,check(shape(q,1)==ib3),depend(q) :: ib3=shape(q,1)
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            integer, optional,check(len(fpint)>=intest),depend(fpint) :: intest=len(fpint)
+            integer, optional,check(len(index_bn)>=nrest),depend(index_bn) :: nrest=len(index_bn)
+            integer :: nx0
+            real*8 dimension(nmax) :: tx
+            integer :: ny0
+            real*8 dimension(nmax),depend(nmax) :: ty
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 :: fp0
+            real*8 dimension(intest) :: fpint
+            real*8 dimension(intest),depend(intest) :: coord
+            real*8 dimension(nc),depend(nc) :: f
+            real*8 dimension(nc),depend(nc) :: ff
+            real*8 dimension(nc,ib1),depend(nc) :: a
+            real*8 dimension(nc,ib3),depend(nc) :: q
+            real*8 dimension(nmax,km2),depend(nmax) :: bx
+            real*8 dimension(nmax,km2),depend(nmax,km2) :: by
+            real*8 dimension(m,km1),depend(m) :: spx
+            real*8 dimension(m,km1),depend(m,km1) :: spy
+            real*8 dimension(ib3),depend(ib3) :: h
+            integer dimension(nrest) :: index_bn
+            integer dimension(m),depend(m) :: nummer
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer :: ier
+        end subroutine fpsurf
+        subroutine fpsysy(a,n,g) ! in :wind:fitpack/fpsysy.f
+            real*8 dimension(6,6) :: a
+            integer :: n
+            real*8 dimension(6) :: g
+        end subroutine fpsysy
+        subroutine fptrnp(m,mm,idim,n,nr,sp,p,b,z,a,q,right) ! in :wind:fitpack/fptrnp.f
+            integer, optional,check(len(nr)>=m),depend(nr) :: m=len(nr)
+            integer :: mm
+            integer :: idim
+            integer, optional,check(shape(b,0)==n),depend(b) :: n=shape(b,0)
+            integer dimension(m) :: nr
+            real*8 dimension(m,4),depend(m) :: sp
+            real*8 :: p
+            real*8 dimension(n,5) :: b
+            real*8 dimension(m*mm*idim),depend(m,mm,idim) :: z
+            real*8 dimension(n,5),depend(n) :: a
+            real*8 dimension((n-4)*mm*idim),depend(mm,idim,n) :: q
+            real*8 dimension(mm*idim),depend(mm,idim) :: right
+        end subroutine fptrnp
+        subroutine fptrpe(m,mm,idim,n,nr,sp,p,b,z,a,aa,q,right) ! in :wind:fitpack/fptrpe.f
+            integer, optional,check(len(nr)>=m),depend(nr) :: m=len(nr)
+            integer :: mm
+            integer :: idim
+            integer, optional,check(shape(b,0)==n),depend(b) :: n=shape(b,0)
+            integer dimension(m) :: nr
+            real*8 dimension(m,4),depend(m) :: sp
+            real*8 :: p
+            real*8 dimension(n,5) :: b
+            real*8 dimension(m*mm*idim),depend(m,mm,idim) :: z
+            real*8 dimension(n,5),depend(n) :: a
+            real*8 dimension(n,4),depend(n) :: aa
+            real*8 dimension((n-7)*mm*idim),depend(mm,idim,n) :: q
+            real*8 dimension(mm*idim),depend(mm,idim) :: right
+        end subroutine fptrpe
+        subroutine insert(iopt,t,n,c,k,x,tt,nn,cc,nest,ier) ! in :wind:fitpack/insert.f
+            integer :: iopt
+            real*8 dimension(nest) :: t
+            integer :: n
+            real*8 dimension(nest),depend(nest) :: c
+            integer :: k
+            real*8 :: x
+            real*8 dimension(nest),depend(nest) :: tt
+            integer :: nn
+            real*8 dimension(nest),depend(nest) :: cc
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            integer :: ier
+        end subroutine insert
+        subroutine parcur(iopt,ipar,idim,m,u,mx,x,w,ub,ue,k,s,nest,n,t,nc,c,fp,wrk,lwrk,iwrk,ier) ! in :wind:fitpack/parcur.f
+            integer :: iopt
+            integer :: ipar
+            integer :: idim
+            integer, optional,check(len(u)>=m),depend(u) :: m=len(u)
+            real*8 dimension(m) :: u
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(mx) :: x
+            real*8 dimension(m),depend(m) :: w
+            real*8 :: ub
+            real*8 :: ue
+            integer :: k
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            integer :: n
+            real*8 dimension(nest) :: t
+            integer, optional,check(len(c)>=nc),depend(c) :: nc=len(c)
+            real*8 dimension(nc) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(nest),depend(nest) :: iwrk
+            integer :: ier
+        end subroutine parcur
+        subroutine parder(tx,nx,ty,ny,c,kx,ky,nux,nuy,x,mx,y,my,z,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/parder.f
+            real*8 dimension(nx) :: tx
+            integer, optional,check(len(tx)>=nx),depend(tx) :: nx=len(tx)
+            real*8 dimension(ny) :: ty
+            integer, optional,check(len(ty)>=ny),depend(ty) :: ny=len(ty)
+            real*8 dimension((nx-kx-1)*(ny-ky-1)),depend(nx,ny,kx,ky) :: c
+            integer :: kx
+            integer :: ky
+            integer :: nux
+            integer :: nuy
+            real*8 dimension(mx) :: x
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(my) :: y
+            integer, optional,check(len(y)>=my),depend(y) :: my=len(y)
+            real*8 dimension(mx*my),depend(mx,my) :: z
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine parder
+        subroutine pardeu(tx,nx,ty,ny,c,kx,ky,nux,nuy,x,y,z,m,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/pardeu.f
+            real*8 dimension(nx) :: tx
+            integer, optional,check(len(tx)>=nx),depend(tx) :: nx=len(tx)
+            real*8 dimension(ny) :: ty
+            integer, optional,check(len(ty)>=ny),depend(ty) :: ny=len(ty)
+            real*8 dimension((nx-kx-1)*(ny-ky-1)),depend(nx,ny,kx,ky) :: c
+            integer :: kx
+            integer :: ky
+            integer :: nux
+            integer :: nuy
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: z
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine pardeu
+        subroutine parsur(iopt,ipar,idim,mu,u,mv,v,f,s,nuest,nvest,nu,tu,nv,tv,c,fp,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/parsur.f
+            integer :: iopt
+            integer dimension(2) :: ipar
+            integer :: idim
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mv) :: v
+            real*8 dimension(mu*mv*idim),depend(idim,mu,mv) :: f
+            real*8 :: s
+            integer, optional,check(len(tu)>=nuest),depend(tu) :: nuest=len(tu)
+            integer, optional,check(len(tv)>=nvest),depend(tv) :: nvest=len(tv)
+            integer :: nu
+            real*8 dimension(nuest) :: tu
+            integer :: nv
+            real*8 dimension(nvest) :: tv
+            real*8 dimension((nuest-4)*(nvest-4)*idim),depend(idim,nuest,nvest) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine parsur
+        subroutine percur(iopt,m,x,y,w,k,s,nest,n,t,c,fp,wrk,lwrk,iwrk,ier) ! in :wind:fitpack/percur.f
+            integer :: iopt
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: w
+            integer :: k
+            real*8 :: s
+            integer, optional,check(len(t)>=nest),depend(t) :: nest=len(t)
+            integer :: n
+            real*8 dimension(nest) :: t
+            real*8 dimension(nest),depend(nest) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(nest),depend(nest) :: iwrk
+            integer :: ier
+        end subroutine percur
+        subroutine pogrid(iopt,ider,mu,u,mv,v,z,z0,r,s,nuest,nvest,nu,tu,nv,tv,c,fp,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/pogrid.f
+            integer dimension(3) :: iopt
+            integer dimension(2) :: ider
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mv) :: v
+            real*8 dimension(mu*mv),depend(mu,mv) :: z
+            real*8 :: z0
+            real*8 :: r
+            real*8 :: s
+            integer, optional,check(len(tu)>=nuest),depend(tu) :: nuest=len(tu)
+            integer, optional,check(len(tv)>=nvest),depend(tv) :: nvest=len(tv)
+            integer :: nu
+            real*8 dimension(nuest) :: tu
+            integer :: nv
+            real*8 dimension(nvest) :: tv
+            real*8 dimension((nuest-4)*(nvest-4)),depend(nuest,nvest) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine pogrid
+        subroutine polar(iopt,m,x,y,z,w,rad,s,nuest,nvest,eps,nu,tu,nv,tv,u,v,c,fp,wrk1,lwrk1,wrk2,lwrk2,iwrk,kwrk,ier) ! in :wind:fitpack/polar.f
+            use polar__user__routines
+            integer dimension(3) :: iopt
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: z
+            real*8 dimension(m),depend(m) :: w
+            external rad
+            real*8 :: s
+            integer, optional,check(len(tu)>=nuest),depend(tu) :: nuest=len(tu)
+            integer, optional,check(len(tv)>=nvest),depend(tv) :: nvest=len(tv)
+            real*8 :: eps
+            integer :: nu
+            real*8 dimension(nuest) :: tu
+            integer :: nv
+            real*8 dimension(nvest) :: tv
+            real*8 dimension(m),depend(m) :: u
+            real*8 dimension(m),depend(m) :: v
+            real*8 dimension((nuest-4)*(nvest-4)),depend(nuest,nvest) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk1) :: wrk1
+            integer, optional,check(len(wrk1)>=lwrk1),depend(wrk1) :: lwrk1=len(wrk1)
+            real*8 dimension(lwrk2) :: wrk2
+            integer, optional,check(len(wrk2)>=lwrk2),depend(wrk2) :: lwrk2=len(wrk2)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine polar
+        subroutine profil(iopt,tx,nx,ty,ny,c,kx,ky,u,nu,cu,ier) ! in :wind:fitpack/profil.f
+            integer :: iopt
+            real*8 dimension(nx) :: tx
+            integer, optional,check(len(tx)>=nx),depend(tx) :: nx=len(tx)
+            real*8 dimension(ny) :: ty
+            integer, optional,check(len(ty)>=ny),depend(ty) :: ny=len(ty)
+            real*8 dimension((nx-kx-1)*(ny-ky-1)),depend(nx,ny,kx,ky) :: c
+            integer :: kx
+            integer :: ky
+            real*8 :: u
+            integer, optional,check(len(cu)>=nu),depend(cu) :: nu=len(cu)
+            real*8 dimension(nu) :: cu
+            integer :: ier
+        end subroutine profil
+        subroutine regrid(iopt,mx,x,my,y,z,xb,xe,yb,ye,kx,ky,s,nxest,nyest,nx,tx,ny,ty,c,fp,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/regrid.f
+            integer :: iopt
+            integer, optional,check(len(x)>=mx),depend(x) :: mx=len(x)
+            real*8 dimension(mx) :: x
+            integer, optional,check(len(y)>=my),depend(y) :: my=len(y)
+            real*8 dimension(my) :: y
+            real*8 dimension(mx*my),depend(mx,my) :: z
+            real*8 :: xb
+            real*8 :: xe
+            real*8 :: yb
+            real*8 :: ye
+            integer :: kx
+            integer :: ky
+            real*8 :: s
+            integer, optional,check(len(tx)>=nxest),depend(tx) :: nxest=len(tx)
+            integer, optional,check(len(ty)>=nyest),depend(ty) :: nyest=len(ty)
+            integer :: nx
+            real*8 dimension(nxest) :: tx
+            integer :: ny
+            real*8 dimension(nyest) :: ty
+            real*8 dimension((nxest-kx-1)*(nyest-ky-1)),depend(kx,ky,nxest,nyest) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine regrid
+        subroutine spalde(t,n,c,k1,x,d,ier) ! in :wind:fitpack/spalde.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(n),depend(n) :: c
+            integer, optional,check(len(d)>=k1),depend(d) :: k1=len(d)
+            real*8 :: x
+            real*8 dimension(k1) :: d
+            integer :: ier
+        end subroutine spalde
+        subroutine spgrid(iopt,ider,mu,u,mv,v,r,r0,r1,s,nuest,nvest,nu,tu,nv,tv,c,fp,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/spgrid.f
+            integer dimension(3) :: iopt
+            integer dimension(4) :: ider
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mv) :: v
+            real*8 dimension(mu*mv),depend(mu,mv) :: r
+            real*8 :: r0
+            real*8 :: r1
+            real*8 :: s
+            integer, optional,check(len(tu)>=nuest),depend(tu) :: nuest=len(tu)
+            integer, optional,check(len(tv)>=nvest),depend(tv) :: nvest=len(tv)
+            integer :: nu
+            real*8 dimension(nuest) :: tu
+            integer :: nv
+            real*8 dimension(nvest) :: tv
+            real*8 dimension((nuest-4)*(nvest-4)),depend(nuest,nvest) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine spgrid
+        subroutine sphere(iopt,m,teta,phi,r,w,s,ntest,npest,eps,nt,tt,np,tp,c,fp,wrk1,lwrk1,wrk2,lwrk2,iwrk,kwrk,ier) ! in :wind:fitpack/sphere.f
+            integer :: iopt
+            integer, optional,check(len(teta)>=m),depend(teta) :: m=len(teta)
+            real*8 dimension(m) :: teta
+            real*8 dimension(m),depend(m) :: phi
+            real*8 dimension(m),depend(m) :: r
+            real*8 dimension(m),depend(m) :: w
+            real*8 :: s
+            integer, optional,check(len(tt)>=ntest),depend(tt) :: ntest=len(tt)
+            integer, optional,check(len(tp)>=npest),depend(tp) :: npest=len(tp)
+            real*8 :: eps
+            integer :: nt
+            real*8 dimension(ntest) :: tt
+            integer :: np
+            real*8 dimension(npest) :: tp
+            real*8 dimension((ntest-4)*(npest-4)),depend(ntest,npest) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk1) :: wrk1
+            integer, optional,check(len(wrk1)>=lwrk1),depend(wrk1) :: lwrk1=len(wrk1)
+            real*8 dimension(lwrk2) :: wrk2
+            integer, optional,check(len(wrk2)>=lwrk2),depend(wrk2) :: lwrk2=len(wrk2)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine sphere
+        subroutine splder(t,n,c,k,nu,x,y,m,e,wrk,ier) ! in :wind:fitpack/splder.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(n),depend(n) :: c
+            integer :: k
+            integer :: nu
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            integer :: e
+            real*8 dimension(n),depend(n) :: wrk
+            integer :: ier
+        end subroutine splder
+        subroutine splev(t,n,c,k,x,y,m,e,ier) ! in :wind:fitpack/splev.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(n),depend(n) :: c
+            integer :: k
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            integer :: e
+            integer :: ier
+        end subroutine splev
+        function splint(t,n,c,k,a,b,wrk) ! in :wind:fitpack/splint.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(n),depend(n) :: c
+            integer :: k
+            real*8 :: a
+            real*8 :: b
+            real*8 dimension(n),depend(n) :: wrk
+            real*8 :: splint
+        end function splint
+        subroutine sproot(t,n,c,zero,mest,m,ier) ! in :wind:fitpack/sproot.f
+            real*8 dimension(n) :: t
+            integer, optional,check(len(t)>=n),depend(t) :: n=len(t)
+            real*8 dimension(n),depend(n) :: c
+            real*8 dimension(mest) :: zero
+            integer, optional,check(len(zero)>=mest),depend(zero) :: mest=len(zero)
+            integer :: m
+            integer :: ier
+        end subroutine sproot
+        subroutine surev(idim,tu,nu,tv,nv,c,u,mu,v,mv,f,mf,wrk,lwrk,iwrk,kwrk,ier) ! in :wind:fitpack/surev.f
+            integer :: idim
+            real*8 dimension(nu) :: tu
+            integer, optional,check(len(tu)>=nu),depend(tu) :: nu=len(tu)
+            real*8 dimension(nv) :: tv
+            integer, optional,check(len(tv)>=nv),depend(tv) :: nv=len(tv)
+            real*8 dimension((nu-4)*(nv-4)*idim),depend(idim,nu,nv) :: c
+            real*8 dimension(mu) :: u
+            integer, optional,check(len(u)>=mu),depend(u) :: mu=len(u)
+            real*8 dimension(mv) :: v
+            integer, optional,check(len(v)>=mv),depend(v) :: mv=len(v)
+            real*8 dimension(mf) :: f
+            integer, optional,check(len(f)>=mf),depend(f) :: mf=len(f)
+            real*8 dimension(lwrk) :: wrk
+            integer, optional,check(len(wrk)>=lwrk),depend(wrk) :: lwrk=len(wrk)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine surev
+        subroutine surfit(iopt,m,x,y,z,w,xb,xe,yb,ye,kx,ky,s,nxest,nyest,nmax,eps,nx,tx,ny,ty,c,fp,wrk1,lwrk1,wrk2,lwrk2,iwrk,kwrk,ier) ! in :wind:fitpack/surfit.f
+            integer :: iopt
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            real*8 dimension(m) :: x
+            real*8 dimension(m),depend(m) :: y
+            real*8 dimension(m),depend(m) :: z
+            real*8 dimension(m),depend(m) :: w
+            real*8 :: xb
+            real*8 :: xe
+            real*8 :: yb
+            real*8 :: ye
+            integer :: kx
+            integer :: ky
+            real*8 :: s
+            integer :: nxest
+            integer :: nyest
+            integer, optional,check(len(tx)>=nmax),depend(tx) :: nmax=len(tx)
+            real*8 :: eps
+            integer :: nx
+            real*8 dimension(nmax) :: tx
+            integer :: ny
+            real*8 dimension(nmax),depend(nmax) :: ty
+            real*8 dimension((nxest-kx-1)*(nyest-ky-1)),depend(kx,ky,nxest,nyest) :: c
+            real*8 :: fp
+            real*8 dimension(lwrk1) :: wrk1
+            integer, optional,check(len(wrk1)>=lwrk1),depend(wrk1) :: lwrk1=len(wrk1)
+            real*8 dimension(lwrk2) :: wrk2
+            integer, optional,check(len(wrk2)>=lwrk2),depend(wrk2) :: lwrk2=len(wrk2)
+            integer dimension(kwrk) :: iwrk
+            integer, optional,check(len(iwrk)>=kwrk),depend(iwrk) :: kwrk=len(iwrk)
+            integer :: ier
+        end subroutine surfit
+    end interface 
+end python module wind
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
