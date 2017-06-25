@@ -20,7 +20,6 @@ subroutine sphere_forward_euler(t0,t1,tn,dt,lat,lon, &
   real*8 vtx2(vnx2), vty2(vny2)
   real*8 :: vc2((vnx2-kx-1)*(vny2-ky-1))
   integer,parameter :: lwrk=8, kwrk=2
-  ! integer,parameter :: lwrk=372, kwrk=22
   real*8 :: wrk(lwrk)
   integer :: iwrk(kwrk)
   real*8 u1(1), u2(1), v1(1), v2(1)

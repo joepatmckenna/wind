@@ -1,9 +1,10 @@
 #!/bin/bash
 # get double precision version of fitpack from scipy repo:
 # svn checkout https://github.com/scipy/scipy/trunk/scipy/interpolate/fitpack
+# delete unused files from fitpack
 (rm *.o *.so *.mod a.out)
-#(f2py sphere_forward_euler.f90 fitpack/*.f -m wind -h wind_autogen.pyf)
+# (f2py ftle.f90 sphere_odeint/*.f90 fitpack/*.f -m wind -h wind_autogen.pyf --overwrite-signature)
 # copied wind_autogen.pyf to wind.pyf
 # included subroutine rep that calls fitpack/spgrid.f in wind.pyf (inspired by scipy/scipy/interpolate/src/fitpack.pyf regrid_smth_spher)
 # modified subroutine bispev in wind.pyf (inspired by scipy/scipy/interpolate/src/fitpack.pyf bispev)
-(f2py -c wind.pyf sphere_odeint/*.f90 fitpack/*.f)
+(f2py -c wind.pyf ftle.f90 sphere_odeint/*.f90 fitpack/*.f)

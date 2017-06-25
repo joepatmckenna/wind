@@ -11,16 +11,35 @@ python module polar__user__routines
 end python module polar__user__routines
 python module wind ! in
     interface  ! in :wind
-         subroutine sphere_forward_euler(t0,t1,tn,dt,lat,lon, &
+       ! not auto-generated
+       subroutine dlat(lat1,lat2)
+         real*8 :: lat1
+         real*8 :: lat2
+       end subroutine dlat
+       ! not auto-generated
+       function dlon(lon1,lon2)
+         real*8 :: lon1
+         real*8 :: lon2
+       end function dlon
+       ! not auto-generated
+       subroutine ftle(n_lat,n_lon,x,y,z,T,e)
+         ! e = ftle(x,y,z,T)
+         integer intent(hide),depend(x) :: n_lat=shape(x,0)
+         integer intent(hide),depend(x) :: n_lon=shape(x,1)
+         real*8 dimension(n_lat,n_lon),intent(in) :: x,y
+         real*8 dimension(n_lat,n_lon,2),intent(in) :: z
+         real*8 T
+         real*8 dimension(n_lat-2,n_lon),intent(out) :: e
+       end subroutine ftle
+       ! not auto-generated
+       subroutine sphere_forward_euler(t0,t1,tn,dt,lat,lon, &
               utx1,unx1,uty1,uny1,uc1, &
               utx2,unx2,uty2,uny2,uc2, &
               vtx1,vnx1,vty1,vny1,vc1, &
               vtx2,vnx2,vty2,vny2,vc2,kx,ky)
-
            ! lat,lon = sphere_forward_euler(t0,t1,tn,dt,lat,lon &
            !      utx1,uty1,uc1,utx2,uty2,uc2, &
-           !      vtx1,vty1,vc1,vtx2,vty2,vc2,traj)
-
+           !      vtx1,vty1,vc1,vtx2,vty2,vc2)
            integer, intent(hide) :: kx=3,ky=3
            integer :: t0,t1,tn,dt
            real*8 intent(in,out) :: lat,lon
@@ -50,15 +69,12 @@ python module wind ! in
                 depend(vnx2,vny2,kx,ky),check(len(vc2)==(vnx2-kx-1)*(vny2-ky-1)):: vc2
            ! real*8 intent(out),dimension(1+(tn-t1)/dt,2) :: traj
        end subroutine sphere_forward_euler
-
         ! rep: not auto-generated
         subroutine rep(iopt,ider,mx,x,my,y,z,z0,z1,s,nxest,nyest, &
              nx,tx,ny,ty,c,fp,wrk,lwrk,iwrk,kwrk,ier)
           !  nx,tx,ny,ty,c,fp,ier = rep(x,y,z,[z0,z1,s])
-
           fortranname spgrid
           threadsafe
-
           integer dimension(3) :: iopt
           integer dimension(4) :: ider
           integer intent(hide) :: mx=len(x)
@@ -88,14 +104,11 @@ python module wind ! in
                :: kwrk=5+mx+my+nxest+nyest
           integer intent(out) :: ier
         end subroutine rep
-
         ! ev: not auto-generated
         subroutine ev(tx,nx,ty,ny,c,kx,ky,x,mx,y,my,z,wrk,lwrk,iwrk,kwrk,ier)
           ! z,ier = ev(tx,ty,c,x,y)
-
           fortranname bispev
           threadsafe
-
           integer, intent(hide) :: kx=3,ky=3
           real*8 dimension(nx),intent(in) :: tx
           integer intent(hide),depend(tx) :: nx=len(tx)

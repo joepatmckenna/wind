@@ -11,7 +11,54 @@ python module polar__user__routines
 end python module polar__user__routines
 python module wind ! in 
     interface  ! in :wind
-        subroutine sphere_forward_euler ! in :wind:sphere_forward_euler.f90
+        function dlat(lat1,lat2) ! in :wind:ftle.f90
+            real*8 :: lat1
+            real*8 :: lat2
+            real*8 :: dlat
+        end function dlat
+        function dlon(lon1,lon2) ! in :wind:ftle.f90
+            real*8 :: lon1
+            real*8 :: lon2
+            real*8 :: dlon
+        end function dlon
+        subroutine ftle(n_lat,n_lon,x,y,z,t,e) ! in :wind:ftle.f90
+            integer, optional,check(shape(x,0)==n_lat),depend(x) :: n_lat=shape(x,0)
+            integer, optional,check(shape(x,1)==n_lon),depend(x) :: n_lon=shape(x,1)
+            real*8 dimension(n_lat,n_lon) :: x
+            real*8 dimension(n_lat,n_lon),depend(n_lat,n_lon) :: y
+            real*8 dimension(n_lat,n_lon,2),depend(n_lat,n_lon) :: z
+            real*8 :: t
+            real*8 dimension(n_lat - 2,n_lon),depend(n_lat,n_lon) :: e
+        end subroutine ftle
+        subroutine sphere_forward_euler(t0,t1,tn,dt,lat,lon,utx1,unx1,uty1,uny1,uc1,utx2,unx2,uty2,uny2,uc2,vtx1,vnx1,vty1,vny1,vc1,vtx2,vnx2,vty2,vny2,vc2,kx,ky) ! in :wind:sphere_odeint/sphere_forward_euler.f90
+            integer :: t0
+            integer :: t1
+            integer :: tn
+            integer :: dt
+            real*8 :: lat
+            real*8 :: lon
+            real*8 dimension(unx1) :: utx1
+            integer, optional,check(len(utx1)>=unx1),depend(utx1) :: unx1=len(utx1)
+            real*8 dimension(uny1) :: uty1
+            integer, optional,check(len(uty1)>=uny1),depend(uty1) :: uny1=len(uty1)
+            real*8 dimension((unx1-kx-1)*(uny1-ky-1)),depend(unx1,uny1,kx,ky) :: uc1
+            real*8 dimension(unx2) :: utx2
+            integer, optional,check(len(utx2)>=unx2),depend(utx2) :: unx2=len(utx2)
+            real*8 dimension(uny2) :: uty2
+            integer, optional,check(len(uty2)>=uny2),depend(uty2) :: uny2=len(uty2)
+            real*8 dimension((unx2-kx-1)*(uny2-ky-1)),depend(unx2,uny2,kx,ky) :: uc2
+            real*8 dimension(vnx1) :: vtx1
+            integer, optional,check(len(vtx1)>=vnx1),depend(vtx1) :: vnx1=len(vtx1)
+            real*8 dimension(vny1) :: vty1
+            integer, optional,check(len(vty1)>=vny1),depend(vty1) :: vny1=len(vty1)
+            real*8 dimension((vnx1-kx-1)*(vny1-ky-1)),depend(vnx1,vny1,kx,ky) :: vc1
+            real*8 dimension(vnx2) :: vtx2
+            integer, optional,check(len(vtx2)>=vnx2),depend(vtx2) :: vnx2=len(vtx2)
+            real*8 dimension(vny2) :: vty2
+            integer, optional,check(len(vty2)>=vny2),depend(vty2) :: vny2=len(vty2)
+            real*8 dimension((vnx2-kx-1)*(vny2-ky-1)),depend(vnx2,vny2,kx,ky) :: vc2
+            integer :: kx
+            integer :: ky
         end subroutine sphere_forward_euler
         subroutine bispeu(tx,nx,ty,ny,c,kx,ky,x,y,z,m,wrk,lwrk,ier) ! in :wind:fitpack/bispeu.f
             real*8 dimension(nx) :: tx
